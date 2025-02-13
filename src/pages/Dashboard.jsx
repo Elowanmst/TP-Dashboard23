@@ -1,6 +1,7 @@
 import { useContext, useEffect, useState } from "react";
 import { UserContext } from "../context/UserContext";
 import { useNavigate } from "react-router-dom";
+import { getToken } from "../utils/auth";
 
 const Dashboard = () => {
    const { user, logout } = useContext(UserContext);
@@ -10,10 +11,11 @@ const Dashboard = () => {
    useEffect(() => {
       const fetchData = async () => {
          try {
+            const token = getToken();
             const response = await fetch("http://localhost:3000/dashboard", {
                method: "GET",
                headers: {
-                  Authorization: `Bearer ${user.token}`,
+                  Authorization: `Bearer ${token}`,
                },
             });
 

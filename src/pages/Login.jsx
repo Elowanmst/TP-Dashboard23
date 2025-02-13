@@ -1,7 +1,8 @@
 import { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
-import { z } from "zod";
 import { UserContext } from "../context/UserContext";
+import { setToken } from "../utils/auth";
+import { userSchema } from "../schemas/userSchema";
 
 const Login = () => {
    const [email, setEmail] = useState("");
@@ -10,15 +11,9 @@ const Login = () => {
    const { login } = useContext(UserContext);
    const navigate = useNavigate();
 
-   const userSchema = z.object({
-      email: z.string().email(),
-      password: z.string().min(8),
-   });
-
    const SubmitLogin = async (e) => {
       e.preventDefault();
 
-      // Validation des données avec un schéma zod
       const parsed = userSchema.safeParse({ email, password });
 
       if (parsed.success) {
@@ -32,47 +27,42 @@ const Login = () => {
             });
 
             if (response.ok) {
-               const data = await response.json();
-               login(data.token);
+               const userData = await response.json();
+               login(userData);
+               setToken(userData.token);
                navigate("/dashboard");
             } else {
-               setMessage("Erreurs de connexion");
+               const errorData = await response.json();
+               setMessage(errorData.message || "Erreur de connexion");
             }
          } catch (error) {
             console.error("Error:", error);
-            setMessage("Erreurs de connexion");
+            setMessage("Erreur de connexion");
          }
       } else {
-         alert("Données non valides");
+         setMessage("Validation échouée");
       }
    };
 
    return (
-      <div>
-         <h2>Connexion</h2>
-         <form onSubmit={SubmitLogin}>
-            <div>
-               <label>Email:</label>
-               <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-               />
-            </div>
-            <div>
-               <label>Mot de passe:</label>
-               <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-               />
-            </div>
-            <button type="submit">Se connecter</button>
-         </form>
+      <form onSubmit={SubmitLogin}>
+         <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Email"
+            required
+         />
+         <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Mot de passe"
+            required
+         />
+         <button type="submit">Connexion</button>
          {message && <p>{message}</p>}
-      </div>
+      </form>
    );
 };
 
