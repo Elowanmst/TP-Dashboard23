@@ -1,89 +1,56 @@
 import { useState } from "react";
-import { z } from "zod";
+import { useNavigate } from "react-router-dom";
 
 const Register = () => {
    const [email, setEmail] = useState("");
    const [password, setPassword] = useState("");
-   const [confirmPassword, setConfirmPassword] = useState("");
    const [message, setMessage] = useState("");
+   const navigate = useNavigate();
 
-   const userSchema = z.object({
-      email: z.string().email(),
-      password: z.string().min(8),
-      confirmPassword: z.string().min(8),
-   });
-
-   const SubmitRegister = async (e) => {
+   const handleSubmit = async (e) => {
       e.preventDefault();
 
-      if (password !== confirmPassword) {
-         setMessage("Les mots de passe ne sont pas identiques");
-         return;
-      }
+      try {
+         const response = await fetch("http://localhost:3000/register", {
+            method: "POST",
+            headers: {
+               "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ email, password }),
+         });
 
-      // Validation des données avec un schéma zod
-      const parsed = userSchema.safeParse({ email, password, confirmPassword });
-
-      if (parsed.success) {
-         // Envoi des données à l'API sur la route /register en POST
-         try {
-            const response = await fetch("http://localhost:3000/register", {
-               method: "POST",
-               headers: {
-                  "Content-Type": "application/json",
-               },
-               body: JSON.stringify({ email, password }),
-            });
-
-            if (response.ok) {
-               setMessage("Inscription réussite");
-            } else {
-               setMessage("Erreur d'inscription");
-            }
-         } catch (error) {
-            console.error("Error:", error);
-            setMessage("Erreur de l'inscription");
+         if (response.ok) {
+            setMessage("Inscription réussie");
+            navigate("/login");
+         } else {
+            const errorData = await response.json();
+            setMessage(errorData.message || "Erreur d'inscription");
          }
-      } else {
-         alert("Données non valides");
+      } catch (error) {
+         console.error("Error:", error);
+         setMessage("Erreur d'inscription");
       }
    };
 
    return (
-      <div>
-         <h2>Inscription</h2>
-         <form onSubmit={SubmitRegister}>
-            <div>
-               <label>Email :</label>
-               <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-               />
-            </div>
-            <div>
-               <label>Mot de passe :</label>
-               <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-               />
-            </div>
-            <div>
-               <label>Confirmation du mot de passe :</label>
-               <input
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
-               />
-            </div>
-            <button type="submit">S&apos;inscrire</button>
-         </form>
+      <form onSubmit={handleSubmit}>
+         <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Email"
+            required
+         />
+         <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Mot de passe"
+            required
+         />
+         <button type="submit">Inscription</button>
          {message && <p>{message}</p>}
-      </div>
+      </form>
    );
 };
 

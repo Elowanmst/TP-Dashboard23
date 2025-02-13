@@ -5,13 +5,19 @@ import { getToken } from "../utils/auth";
 
 const Dashboard = () => {
    const { user, logout } = useContext(UserContext);
-   const [data, setData] = useState([]);
+   const [data, setData] = useState(null);
+   const [error, setError] = useState(null);
    const navigate = useNavigate();
 
    useEffect(() => {
       const fetchData = async () => {
+         const token = getToken();
+         if (!token) {
+            navigate("/login");
+            return;
+         }
+
          try {
-            const token = getToken();
             const response = await fetch("http://localhost:3000/dashboard", {
                method: "GET",
                headers: {
@@ -23,21 +29,20 @@ const Dashboard = () => {
                const result = await response.json();
                setData(result);
             } else {
-               console.error("Erreur de récupération des données");
+               const errorText = await response.text();
+               setError(
+                  `Erreur lors de la récupération des données: ${errorText}`
+               );
             }
          } catch (error) {
-            console.error("Error:", error);
+            setError(`Erreur: ${error.message}`);
          }
       };
 
-      if (user) {
-         fetchData();
-      } else {
-         navigate("/login");
-      }
-   }, [user, navigate]);
+      fetchData();
+   }, [navigate]);
 
-   const SubmitLogout = () => {
+   const handleLogout = () => {
       logout();
       navigate("/login");
    };
@@ -45,16 +50,16 @@ const Dashboard = () => {
    return (
       <div>
          <h2>Dashboard</h2>
+         {error && <p style={{ color: "red" }}>{error}</p>}
          {data ? (
             <div>
                <p>Bienvenue, {user.email}!</p>
-               <button onClick={SubmitLogout}>Déconnexion</button>
+               <button onClick={handleLogout}>Déconnexion</button>
             </div>
          ) : (
-            <p>Chargement...</p>
+            !error && <p>Chargement...</p>
          )}
       </div>
    );
 };
-
 export default Dashboard;

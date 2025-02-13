@@ -1,8 +1,8 @@
 import { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
+import { z } from "zod";
 import { UserContext } from "../context/UserContext";
 import { setToken } from "../utils/auth";
-import { userSchema } from "../schemas/userSchema";
 
 const Login = () => {
    const [email, setEmail] = useState("");
@@ -11,59 +11,75 @@ const Login = () => {
    const { login } = useContext(UserContext);
    const navigate = useNavigate();
 
-   const SubmitLogin = async (e) => {
+   const userSchema = z.object({
+      email: z.string().email({ message: "Email invalide" }),
+      password: z
+         .string()
+         .min(8, {
+            message: "Le mot de passe doit contenir au moins 8 caractères",
+         }),
+   });
+
+   const handleSubmit = async (e) => {
       e.preventDefault();
 
-      const parsed = userSchema.safeParse({ email, password });
+      try {
+         userSchema.parse({ email, password });
 
-      if (parsed.success) {
-         try {
-            const response = await fetch("http://localhost:3000/login", {
-               method: "POST",
-               headers: {
-                  "Content-Type": "application/json",
-               },
-               body: JSON.stringify({ email, password }),
-            });
+         const response = await fetch("http://localhost:3000/login", {
+            method: "POST",
+            headers: {
+               "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ email, password }),
+         });
 
-            if (response.ok) {
-               const userData = await response.json();
-               login(userData);
-               setToken(userData.token);
-               navigate("/dashboard");
-            } else {
-               const errorData = await response.json();
-               setMessage(errorData.message || "Erreur de connexion");
-            }
-         } catch (error) {
-            console.error("Error:", error);
-            setMessage("Erreur de connexion");
+         if (response.ok) {
+            const data = await response.json();
+            setToken(data.token);
+            login({ token: data.token, email });
+            setMessage("Connexion réussie !");
+            navigate("/dashboard");
+         } else {
+            setMessage("Erreur lors de la connexion");
          }
-      } else {
-         setMessage("Validation échouée");
+      } catch (error) {
+         if (error instanceof z.ZodError) {
+            setMessage(error.errors[0].message);
+         } else {
+            setMessage("Erreur lors de la connexion");
+         }
       }
    };
 
    return (
-      <form onSubmit={SubmitLogin}>
-         <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Email"
-            required
-         />
-         <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Mot de passe"
-            required
-         />
-         <button type="submit">Connexion</button>
+      <div>
+         <h2>Connexion</h2>
+         <form onSubmit={handleSubmit}>
+            <div>
+               <label>Email :</label>
+               <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+               />
+            </div>
+            <div>
+               <label>Mot de passe :</label>
+               <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+               />
+            </div>
+            <button type="submit">Se connecter</button>
+         </form>
          {message && <p>{message}</p>}
-      </form>
+      </div>
    );
 };
+
 
 export default Login;
