@@ -21,7 +21,7 @@ const Dashboard = () => {
                const result = await response.json();
                setData(result);
             } else {
-               console.error("Erreur lors de la récupération des données");
+               console.error("Erreur de récupération des données");
             }
          } catch (error) {
             console.error("Error:", error);

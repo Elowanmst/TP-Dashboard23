@@ -17,7 +17,7 @@ const Register = () => {
       e.preventDefault();
 
       if (password !== confirmPassword) {
-         setMessage("Les mots de passe ne correspondent pas");
+         setMessage("Les mots de passe ne sont pas identiques");
          return;
       }
 
@@ -36,16 +36,16 @@ const Register = () => {
             });
 
             if (response.ok) {
-               setMessage("Inscription réussie");
+               setMessage("Inscription réussite");
             } else {
-               setMessage("Erreur lors de l'inscription");
+               setMessage("Erreur d'inscription");
             }
          } catch (error) {
             console.error("Error:", error);
-            setMessage("Erreur lors de l'inscription");
+            setMessage("Erreur de l'inscription");
          }
       } else {
-         alert("Données invalides");
+         alert("Données non valides");
       }
    };
 

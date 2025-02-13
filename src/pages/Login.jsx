@@ -36,14 +36,14 @@ const Login = () => {
                login(data.token);
                navigate("/dashboard");
             } else {
-               setMessage("Erreur lors de la connexion");
+               setMessage("Erreurs de connexion");
             }
          } catch (error) {
             console.error("Error:", error);
-            setMessage("Erreur lors de la connexion");
+            setMessage("Erreurs de connexion");
          }
       } else {
-         alert("Données invalides");
+         alert("Données non valides");
       }
    };
 
